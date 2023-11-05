@@ -1,8 +1,231 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Hello World</title>
-    <url>/sunshine/2023/11/03/hello-world/</url>
+    <title>Docker部署</title>
+    <url>/sunshine/2023/11/05/Docker%E9%83%A8%E7%BD%B2/</url>
+    <content><![CDATA[<h1 id="虚拟机的安装"><a href="#虚拟机的安装" class="headerlink" title="虚拟机的安装"></a>虚拟机的安装</h1><p><a href="https://blog.csdn.net/qq_39135287/article/details/83993574">https://blog.csdn.net/qq_39135287/article/details/83993574</a></p>
+<h1 id="安装mysql"><a href="#安装mysql" class="headerlink" title="安装mysql"></a>安装mysql</h1><p>部署国内镜像源: </p>
+<p><a href="https://blog.csdn.net/weixin_42838061/article/details/131074972">docker配置国内镜像源_docker国内镜像源-CSDN博客</a></p>
+<blockquote>
+<ol>
+<li>Docker中国区官方镜像<br><a href="https://registry.docker-cn.com/">https://registry.docker-cn.com</a></li>
+<li>网易<br><a href="http://hub-mirror.c.163.com/">http://hub-mirror.c.163.com</a></li>
+<li>ustc<br><a href="https://docker.mirrors.ustc.edu.cn/">https://docker.mirrors.ustc.edu.cn</a></li>
+</ol>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">（1）在/etc/docker目录中添加daemon.json文件，内容如下：</span><br><span class="line">		&#123;</span><br><span class="line">  			&quot;registry-mirrors&quot;: [&quot;http://hub-mirror.c.163.com&quot;,&quot;https://registry.docker-cn.com&quot;,&quot;https://docker.mirrors.ustc.edu.cn&quot;]</span><br><span class="line">		&#125;</span><br><span class="line">（2）重启docker服务：</span><br><span class="line">		 service docker restart</span><br><span class="line">（3）执行：docker info，查看是否配置成功：</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建目录</span></span><br><span class="line">mkdir -p /etc/docker</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">复制内容，注意把其中的镜像加速地址改成你自己的</span></span><br><span class="line">tee /etc/docker/daemon.json &lt;&lt;-&#x27;EOF&#x27;</span><br><span class="line">&#123;</span><br><span class="line">  &quot;registry-mirrors&quot;: [&quot;https://ybpzj6tg.mirror.aliyuncs.com&quot;]</span><br><span class="line">&#125;</span><br><span class="line">EOF</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">重新加载配置</span></span><br><span class="line"></span><br><span class="line">systemctl daemon-reload</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">重启Docker</span></span><br><span class="line">systemctl restart docker</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="快速入门"><a href="#快速入门" class="headerlink" title="快速入门"></a>快速入门</h1><h2 id="部署MySQL"><a href="#部署MySQL" class="headerlink" title="部署MySQL"></a>部署MySQL</h2><p>首先，我们利用Docker来安装一个MySQL软件，大家可以对比一下之前传统的安装方式，看看哪个效率更高一些。</p>
+<p>如果是利用传统方式部署MySQL，大概的步骤有：</p>
+<ul>
+<li>搜索并下载MySQL安装包</li>
+<li>上传至Linux环境</li>
+<li>编译和配置环境</li>
+<li>安装</li>
+</ul>
+<p>而使用Docker安装，仅仅需要一步即可，在命令行输入下面的命令（建议采用CV大法）：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name mysql \</span><br><span class="line">  -p 3306:3306 \</span><br><span class="line">  -e TZ=Asia/Shanghai \</span><br><span class="line">  -e MYSQL_ROOT_PASSWORD=1234 \</span><br><span class="line">  mysql</span><br></pre></td></tr></table></figure>
+
+
+
+<p>运行效果如图：</p>
+<p><img src="https://article.biliimg.com/bfs/article/a67408c77c2d13f0fc8fe00caeafedec488053933.png" alt="image-20231105115925836"></p>
+<p>MySQL安装完毕！通过任意客户端工具即可连接到MySQL.</p>
+<p>大家可以发现，当我们执行命令后，Docker做的第一件事情，是去自动搜索并下载了MySQL，然后会自动运行MySQL，我们完全不用插手，是不是非常方便。</p>
+<p>而且，这种安装方式你完全不用考虑运行的操作系统环境，它不仅仅在CentOS系统是这样，在Ubuntu系统、macOS系统、甚至是装了WSL的Windows下，都可以使用这条命令来安装MySQL。<br>要知道，<strong>不同操作系统下其安装包、运行环境是都不相同的！</strong>如果是<strong>手动安装</strong>，<strong>必须手动解决安装包不同、环境不同的、配置不同的问题</strong>！</p>
+<p>而使用Docker，这些完全不用考虑。就是因为Docker会自动搜索并下载MySQL。注意：这里下载的不是安装包，而是镜像。镜像中不仅包含了MySQL本身，还包含了其运行所需要的环境、配置、系统级函数库。因此它在运行时就有自己独立的环境，就可以跨系统运行，也不需要手动再次配置环境了。这套独立运行的隔离环境我们称为容器。<br>说明：</p>
+<ul>
+<li>镜像：英文是image</li>
+<li>容器：英文是container</li>
+</ul>
+<blockquote>
+<p>因此，Docker安装软件的过程，就是自动搜索下载镜像，然后创建并运行容器的过程。</p>
+</blockquote>
+<p>Docker会根据命令中的镜像名称自动搜索并下载镜像，那么问题来了，它是去哪里搜索和下载镜像的呢？这些镜像又是谁制作的呢？</p>
+<p>Docker官方提供了一个专门管理、存储镜像的网站，并对外开放了镜像上传、下载的权利。Docker官方提供了一些基础镜像，然后各大软件公司又在基础镜像基础上，制作了自家软件的镜像，全部都存放在这个网站。这个网站就成了Docker镜像交流的社区：</p>
+<p><a href="https://hub.docker.com/">Docker镜像仓库</a></p>
+<p>基本上我们常用的各种软件都能在这个网站上找到，我们甚至可以自己制作镜像上传上去。</p>
+<p>像这种提供存储、管理Docker镜像的服务器，被称为DockerRegistry，可以翻译为镜像仓库。DockerHub网站是官方仓库，阿里云、华为云会提供一些第三方仓库，我们也可以自己搭建私有的镜像仓库。</p>
+<p>官方仓库在国外，下载速度较慢，一般我们都会使用第三方仓库提供的镜像加速功能，提高下载速度。而企业内部的机密项目，往往会采用私有镜像仓库。</p>
+<p>总之，镜像的来源有两种：</p>
+<ul>
+<li>基于官方基础镜像自己制作</li>
+<li>直接去DockerRegistry下载</li>
+</ul>
+<blockquote>
+<p>Docker本身包含一个后台服务，我们可以利用Docker命令告诉Docker服务，帮助我们快速部署指定的应用。Docker服务部署应用时，首先要去搜索并下载应用对应的镜像，然后根据镜像创建并允许容器，应用就部署完成了。</p>
+</blockquote>
+<p>用一幅图标示如下：</p>
+<p><img src="https://article.biliimg.com/bfs/article/bcc6d46e4ead03cd9af7a907941161ac488053933.png" alt="image-20231105121150714"></p>
+<h2 id="命令解读"><a href="#命令解读" class="headerlink" title="命令解读"></a>命令解读</h2><p>利用Docker快速的安装了MySQL，非常的方便，不过我们执行的命令到底是什么意思呢？</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name mysql \</span><br><span class="line">  -p 3306:3306 \</span><br><span class="line">  -e TZ=Asia/Shanghai \</span><br><span class="line">  -e MYSQL_ROOT_PASSWORD=1234 \</span><br><span class="line">  mysql</span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>解读：</p>
+<ul>
+<li><code>docker run -d</code> ：创建并运行一个容器，<code>-d</code>则是让容器以后台进程运行</li>
+<li><code>--name mysql </code> : 给容器起个名字叫<code>mysql</code>，你可以叫别的</li>
+<li><code>-p 3306:3306</code> : 设置端口映射。<ul>
+<li><strong>容器是隔离环境</strong>，外界不可访问。但是可以<strong>将宿主机端口映射容器内到端口</strong>，当访问宿主机指定端口时，就是在访问容器内的端口了。</li>
+<li>容器内端口往往是由容器内的进程决定，例如MySQL进程默认端口是3306，因此容器内端口一定是3306；而宿主机端口则可以任意指定，一般与容器内保持一致。</li>
+<li>格式： <code>-p 宿主机端口:容器内端口</code>，示例中就是将宿主机的3306映射到容器内的3306端口</li>
+</ul>
+</li>
+<li><code>-e TZ=Asia/Shanghai</code> : 配置容器内进程运行时的一些参数<ul>
+<li>格式：<code>-e KEY=VALUE</code>，KEY和VALUE都由容器内进程决定</li>
+<li>案例中，<code>TZ=Asia/Shanghai</code>是设置时区；<code>MYSQL_ROOT_PASSWORD=1234</code>是设置MySQL默认密码</li>
+</ul>
+</li>
+<li><code>mysql</code> : 设置<strong>镜像</strong>名称，Docker会根据这个名字搜索并下载镜像<ul>
+<li>格式：<code>REPOSITORY:TAG</code>，例如<code>mysql:8.0</code>，其中<code>REPOSITORY</code>可以理解为镜像名，<code>TAG</code>是版本号</li>
+<li>在未指定<code>TAG</code>的情况下，默认是最新版本，也就是<code>mysql:latest</code></li>
+</ul>
+</li>
+</ul>
+</blockquote>
+<p>镜像的名称不是随意的，而是要到DockerRegistry中寻找，镜像运行时的配置也不是随意的，要参考镜像的帮助文档，这些在DockerHub网站或者软件的官方网站中都能找到。</p>
+<p>如果我们要安装其它软件，也可以到DockerRegistry中寻找对应的镜像名称和版本，阅读相关配置即可。</p>
+<h1 id="Docker基础"><a href="#Docker基础" class="headerlink" title="Docker基础"></a>Docker基础</h1><p>接下来，我们一起来学习Docker使用的一些基础知识，为将来部署项目打下基础。具体用法可以参考Docker官方文档：</p>
+<p><a href="https://docs.docker.com/">Docker官方文档</a></p>
+<h2 id="常见命令"><a href="#常见命令" class="headerlink" title="常见命令"></a>常见命令</h2><p>首先我们来学习Docker中的常见命令，可以参考官方文档：</p>
+<p><a href="https://docs.docker.com/engine/reference/commandline/cli/">Docker常见命令</a></p>
+<h3 id="命令介绍"><a href="#命令介绍" class="headerlink" title="命令介绍"></a>命令介绍</h3><p>其中，比较常见的命令有：</p>
+<table>
+<thead>
+<tr>
+<th align="center">命令</th>
+<th align="center">说明</th>
+<th align="center">文档地址</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">docker pull</td>
+<td align="center">拉取镜像</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/pull/">docker pull</a></td>
+</tr>
+<tr>
+<td align="center">docker push</td>
+<td align="center">推送镜像到DockerRegistry</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/push/">docker push</a></td>
+</tr>
+<tr>
+<td align="center">docker images</td>
+<td align="center">查看本地镜像</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/images/">docker images</a></td>
+</tr>
+<tr>
+<td align="center">docker rmi</td>
+<td align="center">删除本地镜像</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/rmi/">docker rmi</a></td>
+</tr>
+<tr>
+<td align="center">docker run</td>
+<td align="center">创建并运行容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/run/">docker run</a></td>
+</tr>
+<tr>
+<td align="center">docker stop</td>
+<td align="center">停止指定容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/stop/">docker stop</a></td>
+</tr>
+<tr>
+<td align="center">docker start</td>
+<td align="center">启动指定容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/start/">docker start</a></td>
+</tr>
+<tr>
+<td align="center">docker restart</td>
+<td align="center">重写启动容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/restart/">docker restart</a></td>
+</tr>
+<tr>
+<td align="center">docker rm</td>
+<td align="center">删除指定容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/rm/">docs.docker.com</a></td>
+</tr>
+<tr>
+<td align="center">docker ps</td>
+<td align="center">查看容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/ps/">docker ps</a></td>
+</tr>
+<tr>
+<td align="center">docker logs</td>
+<td align="center">查看容器并运行日志</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/logs/">docker logs</a></td>
+</tr>
+<tr>
+<td align="center">docker exec</td>
+<td align="center">进入容器</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/exec/">docker exec</a></td>
+</tr>
+<tr>
+<td align="center">docker save</td>
+<td align="center">保存镜像到本地压缩文件</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/save/">docker save</a></td>
+</tr>
+<tr>
+<td align="center">docker load</td>
+<td align="center">加载本地压缩文件到镜像</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/load/">docker load</a></td>
+</tr>
+<tr>
+<td align="center">docker inspect</td>
+<td align="center">查看容器详细信息</td>
+<td align="center"><a href="https://docs.docker.com/engine/reference/commandline/inspect/">docker inspect</a></td>
+</tr>
+</tbody></table>
+<p>docker run &#x3D; docker create + docker start</p>
+<p>用一副图来表示这些命令的关系：</p>
+<p><img src="https://article.biliimg.com/bfs/article/5257cf62527cc0898fe34cc680f0b75e488053933.png" alt="image-20231105123202752"></p>
+<p>补充：</p>
+<p>默认情况下，每次重启虚拟机我们都需要手动启动Docker和Docker中的容器。通过命令可以实现开机自启：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Docker开机自启</span></span><br><span class="line">systemctl enable docker</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Docker容器开机自启</span></span><br><span class="line">docker update --restart=always [容器名/容器id]</span><br></pre></td></tr></table></figure>
+
+<h3 id="演示"><a href="#演示" class="headerlink" title="演示"></a>演示</h3><p>教学环节说明：我们以Nginx为例给大家演示上述命令。</p>
+<figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 第1步，去DockerHub查看nginx镜像仓库及相关信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第2步，拉取Nginx镜像</span></span><br><span class="line">docker pull nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第3步，查看镜像</span></span><br><span class="line">docker images</span><br><span class="line"><span class="comment"># 结果如下：</span></span><br><span class="line">REPOSITORY   TAG       IMAGE ID       CREATED         SIZE</span><br><span class="line">nginx        latest    <span class="number">605</span>c77e624dd   <span class="number">16</span> months ago   <span class="number">141</span>MB</span><br><span class="line">mysql        latest    <span class="number">3218</span>b38490ce   <span class="number">17</span> months ago   <span class="number">516</span>MB</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第4步，创建并允许Nginx容器</span></span><br><span class="line">docker run <span class="literal">-d</span> <span class="literal">--name</span> nginx <span class="literal">-p</span> <span class="number">80</span>:<span class="number">80</span> nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第5步，查看运行中容器</span></span><br><span class="line">docker <span class="built_in">ps</span></span><br><span class="line"><span class="comment"># 也可以加格式化方式访问，格式会更加清爽</span></span><br><span class="line">docker <span class="built_in">ps</span> <span class="literal">--format</span> <span class="string">&quot;table &#123;&#123;.ID&#125;&#125;\t&#123;&#123;.Image&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Names&#125;&#125;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第6步，访问网页，地址：http://虚拟机地址</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第7步，停止容器</span></span><br><span class="line">docker stop nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第8步，查看所有容器</span></span><br><span class="line">docker <span class="built_in">ps</span> <span class="literal">-a</span> <span class="literal">--format</span> <span class="string">&quot;table &#123;&#123;.ID&#125;&#125;\t&#123;&#123;.Image&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Names&#125;&#125;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第9步，再次启动nginx容器</span></span><br><span class="line">docker <span class="built_in">start</span> nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第10步，再次查看容器</span></span><br><span class="line">docker <span class="built_in">ps</span> <span class="literal">--format</span> <span class="string">&quot;table &#123;&#123;.ID&#125;&#125;\t&#123;&#123;.Image&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Names&#125;&#125;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第11步，查看容器详细信息</span></span><br><span class="line">docker inspect nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第12步，进入容器,查看容器内目录</span></span><br><span class="line">docker exec <span class="literal">-it</span> nginx bash</span><br><span class="line"><span class="comment"># 或者，可以进入MySQL</span></span><br><span class="line">docker exec <span class="literal">-it</span> mysql mysql <span class="literal">-uroot</span> <span class="literal">-p</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 第13步，删除容器</span></span><br><span class="line">docker <span class="built_in">rm</span> nginx</span><br><span class="line"><span class="comment"># 发现无法删除，因为容器运行中，强制删除容器</span></span><br><span class="line">docker <span class="built_in">rm</span> <span class="operator">-f</span> nginx</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">去DockerHub查看nginx镜像仓库及相关信息(要翻墙)</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">拉取镜像</span></span><br><span class="line">docker pull nginx</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看镜像</span></span><br><span class="line">docker images</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建并运行容器</span></span><br><span class="line">docker run -d --name nginx -p 80:80 nginx</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">停止容器</span></span><br><span class="line">docker stop nginx</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">删除容器</span></span><br><span class="line">docker rm nginx</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">发现无法删除，因为容器运行中，强制删除容器</span></span><br><span class="line">docker rm -f nginx</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看容器</span></span><br><span class="line">docker ps</span><br><span class="line">docker ps -a</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看容器后面可以指定格式</span></span><br><span class="line">docker ps --format &quot;table &#123;&#123;.ID&#125;&#125;\t&#123;&#123;.Image&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Names&#125;&#125;&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查看容器并运行日志</span></span><br><span class="line">docker logs nginx</span><br><span class="line">docker logs -f nginx # 持续输出日志</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">保存本地镜像</span></span><br><span class="line">docker save -o nginx.tar nginx:latest</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">删除本地镜像</span></span><br><span class="line">docker rmi nginx:latest</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">加载本地镜像</span></span><br><span class="line">docker load -i nginx.tar</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="命令别名"><a href="#命令别名" class="headerlink" title="命令别名"></a>命令别名</h3><p>给常用Docker命令起别名，方便我们访问：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">修改/root/.bashrc文件</span></span><br><span class="line">vi /root/.bashrc</span><br><span class="line">内容如下：</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">.bashrc</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">User specific aliases and <span class="built_in">functions</span></span></span><br><span class="line"></span><br><span class="line">alias rm=&#x27;rm -i&#x27;</span><br><span class="line">alias cp=&#x27;cp -i&#x27;</span><br><span class="line">alias mv=&#x27;mv -i&#x27;</span><br><span class="line">alias dps=&#x27;docker ps --format &quot;table &#123;&#123;.ID&#125;&#125;\t&#123;&#123;.Image&#125;&#125;\t&#123;&#123;.Ports&#125;&#125;\t&#123;&#123;.Status&#125;&#125;\t&#123;&#123;.Names&#125;&#125;&quot;&#x27;</span><br><span class="line">alias dis=&#x27;docker images&#x27;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Source global definitions</span></span><br><span class="line">if [ -f /etc/bashrc ]; then</span><br><span class="line">        . /etc/bashrc</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+
+<p>然后，执行命令使别名生效</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">source /root/.bashrc</span><br></pre></td></tr></table></figure>
+
+<p>接下来，试试看新的命令吧。</p>
+<h2 id="数据卷"><a href="#数据卷" class="headerlink" title="数据卷"></a>数据卷</h2><p>容器是隔离环境，容器内程序的文件、配置、运行时产生的容器都在容器内部，我们要读写容器内的文件非常不方便。大家思考几个问题：</p>
+<ul>
+<li>如果要升级MySQL版本，需要销毁旧容器，那么数据岂不是跟着被销毁了？</li>
+<li>MySQL、Nginx容器运行后，如果我要修改其中的某些配置该怎么办？</li>
+<li>我想要让Nginx代理我的静态资源怎么办？</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Docker</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>test</title>
+    <url>/sunshine/2023/11/03/test/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
@@ -19,8 +242,8 @@
 ]]></content>
   </entry>
   <entry>
-    <title>test</title>
-    <url>/sunshine/2023/11/03/test/</url>
+    <title>Hello World</title>
+    <url>/sunshine/2023/11/03/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
